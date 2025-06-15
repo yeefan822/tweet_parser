@@ -31,7 +31,7 @@ def find_matching_product():
         for kw in KEYWORDS:
             if kw.lower() in lower_href and not is_excluded(lower_href):
                 print(f"🎯 发现匹配商品：{full_url}")
-                webbrowser.open(full_url)
+                check_add_to_cart(full_url)
                 return full_url
 
     print("❌ 没有找到匹配商品")
@@ -48,18 +48,23 @@ def check_add_to_cart(url):
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(3)  # 页面加载时间可根据实际调整
-
     try:
-        add_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Add to cart')]")
-        if add_button.is_enabled():
-            print("🛒 加入购物车按钮已找到，尝试点击...")
-            add_button.click()
-            # 如果你希望继续自动处理结账流程，可以在这里继续编写
-        else:
-            print("🔒 按钮存在但不可点击")
-    except NoSuchElementException:
-        print("❌ 尚未找到加入购物车按钮，可能商品还未开放购买")
+        # 等待并点击 "Add to cart"
+        add_btn = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Add to cart')]"))
+        )
+        print("🛒 加入购物车按钮已找到，点击中...")
+        add_btn.click()
+
+        # 等待跳转并出现 "CHECKOUT" 按钮
+        checkout_btn = WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[@name='checkout' and contains(text(), 'CHECKOUT')]"))
+        )
+        print("💳 结账按钮已出现，点击中...")
+        checkout_btn.click()
+
+    except Exception as e:
+        print(f"❌ 操作失败: {e}")
     # driver.quit()
 
 def print_matching_products():
